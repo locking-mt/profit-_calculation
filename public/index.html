@@ -251,7 +251,12 @@
         productsMap = {};
         data.data.forEach(p => { productsMap[p.id] = p.name; });
         initSearchableSelect();
-      } catch (e) { console.error('加载产品失败', e); }
+      } catch (e) {
+        console.error('加载产品失败', e);
+        const input = document.getElementById('inputProductSearch');
+        input.placeholder = '加载产品失败，请刷新重试';
+        input.style.borderColor = '#f87171';
+      }
     }
 
     function escHtml(s) {
