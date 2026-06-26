@@ -2,3 +2,5 @@ git add .
 git commit -m "修复依赖和添加.gitignore"
 git push
 git push -u origin master
+npm install
+npm start
