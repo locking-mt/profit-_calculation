@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>利润计算器</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      min-height: 100vh;
+      color: #e2e8f0;
+    }
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+    h1 {
+      text-align: center;
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .subtitle { text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 32px; }
+
+    .card {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(71, 85, 105, 0.4);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      backdrop-filter: blur(12px);
+    }
+    .card h2 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 13px; color: #94a3b8; font-weight: 500; }
+    .form-group input, .form-group textarea {
+      padding: 10px 14px;
+      border: 1px solid rgba(71, 85, 105, 0.6);
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.6);
+      color: #e2e8f0;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-group input:focus, .form-group textarea:focus {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+    }
+    .form-group textarea { resize: vertical; min-height: 60px; }
+    .form-group input::placeholder { color: #475569; }
+
+    .form-group select {
+      padding: 10px 14px;
+      border: 1px solid rgba(71, 85, 105, 0.6);
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.6);
+      color: #e2e8f0;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10z' fill='%2394a3b8'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+    .form-group select:focus {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+    }
+
+    /* 自定义搜索下拉 */
+    .searchable-select { position: relative; }
+    .searchable-select .ss-input {
+      padding: 10px 14px;
+      border: 1px solid rgba(71, 85, 105, 0.6);
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.6);
+      color: #e2e8f0;
+      font-size: 15px;
+      outline: none;
+      width: 100%;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      cursor: text;
+    }
+    .searchable-select .ss-input:focus {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+    }
+    .searchable-select .ss-dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      max-height: 200px;
+      overflow-y: auto;
+      background: #1e293b;
+      border: 1px solid rgba(71, 85, 105, 0.6);
+      border-radius: 0 0 10px 10px;
+      z-index: 100;
+      margin-top: 2px;
+    }
+    .searchable-select .ss-dropdown.open { display: block; }
+    .searchable-select .ss-option {
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #cbd5e1;
+      transition: background 0.15s;
+    }
+    .searchable-select .ss-option:hover,
+    .searchable-select .ss-option.highlighted { background: rgba(56, 189, 248, 0.15); color: #e2e8f0; }
+    .searchable-select .ss-option.no-result { color: #64748b; cursor: default; }
+    .searchable-select .ss-option.no-result:hover { background: transparent; }
+
+    .btn {
+      padding: 10px 22px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #38bdf8, #6366f1);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4); }
+    .btn-ghost {
+      background: transparent;
+      color: #94a3b8;
+      border: 1px solid rgba(71, 85, 105, 0.5);
+    }
+    .btn-ghost:hover { background: rgba(71, 85, 105, 0.2); color: #e2e8f0; }
+    .btn-group { display: flex; gap: 8px; margin-top: 8px; }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .result-item {
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      border: 1px solid rgba(71, 85, 105, 0.3);
+    }
+    .result-item .label { font-size: 12px; color: #64748b; margin-bottom: 4px; }
+    .result-item .value { font-size: 22px; font-weight: 700; }
+    .result-item .value.positive { color: #34d399; }
+    .result-item .value.negative { color: #f87171; }
+    .result-item .value.neutral { color: #38bdf8; }
+
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 1000;
+      animation: slideIn 0.3s ease;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .toast-success { background: #065f46; color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3); }
+    .toast-error { background: #7f1d1d; color: #f87171; border: 1px solid rgba(248, 113, 113, 0.3); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>利润计算器</h1>
+    <p class="subtitle">选择产品 · 输入成交价与点位 · 自动计算利润 · 保存到后端</p>
+
+    <div class="card">
+      <h2>添加记录</h2>
+      <div class="form-grid">
+        <div class="form-group searchable-select" id="productSelectWrap">
+          <label>选择产品 *</label>
+          <input type="text" class="ss-input" id="inputProductSearch" placeholder="输入产品名称搜索..." autocomplete="off">
+          <div class="ss-dropdown" id="productDropdown"></div>
+        </div>
+        <div class="form-group">
+          <label>成交价（元）*</label>
+          <input type="number" id="inputDealPrice" placeholder="0" step="0.01" min="0" value="0">
+        </div>
+        <div class="form-group">
+          <label>点位（%）*</label>
+          <input type="number" id="inputPointRate" placeholder="0" step="0.1" min="0" max="100" value="0">
+        </div>
+        <div class="form-group">
+          <label>备注</label>
+          <textarea id="inputNote" placeholder="可选备注信息..."></textarea>
+        </div>
+      </div>
+
+      <div class="result-grid" id="liveResult" style="margin-top:20px;"></div>
+
+      <div class="btn-group" style="margin-top: 16px; justify-content: center;">
+        <button class="btn btn-primary" onclick="doCalculate()" style="background:linear-gradient(135deg, #34d399, #10b981);box-shadow:0 4px 14px rgba(16,185,129,0.3);">计算</button>
+        <button class="btn btn-ghost" onclick="clearForm()">清空表单</button>
+      </div>
+      <div id="formMsg" style="margin-top:10px;font-size:13px;"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" style="display:none;"></div>
+
+  <script>
+    const API = '/api/records';
+    const API_PRODUCTS = '/api/products';
+    let productsMap = {};
+    let selectedProductId = null;
+    let highlightedIdx = -1;
+    let isProgrammaticChange = false;
+
+    async function loadProducts() {
+      try {
+        const res = await fetch(API_PRODUCTS);
+        const data = await res.json();
+        if (!data.success) return;
+        productsMap = {};
+        data.data.forEach(p => { productsMap[p.id] = p.name; });
+        initSearchableSelect();
+      } catch (e) { console.error('加载产品失败', e); }
+    }
+
+    function escHtml(s) {
+      const div = document.createElement('div');
+      div.textContent = s;
+      return div.innerHTML;
+    }
+
+    // ===== 可搜索下拉组件 =====
+    function initSearchableSelect() {
+      const input = document.getElementById('inputProductSearch');
+      const dropdown = document.getElementById('productDropdown');
+
+      function filterProducts(query) {
+        const q = query.toLowerCase().trim();
+        return Object.entries(productsMap).filter(([, name]) =>
+          name.toLowerCase().includes(q)
+        );
+      }
+
+      function renderDropdown(filtered) {
+        highlightedIdx = -1;
+        if (filtered.length === 0) {
+          dropdown.innerHTML = '<div class="ss-option no-result">无匹配产品</div>';
+        } else {
+          dropdown.innerHTML = filtered.map(([id, name], i) =>
+            `<div class="ss-option" data-id="${id}" data-idx="${i}">${escHtml(name)}</div>`
+          ).join('');
+        }
+      }
+
+      function openDropdown() {
+        const filtered = filterProducts(input.value);
+        renderDropdown(filtered);
+        dropdown.classList.add('open');
+      }
+
+      function closeDropdown() {
+        dropdown.classList.remove('open');
+        highlightedIdx = -1;
+      }
+
+      function selectProduct(id, name) {
+        selectedProductId = id;
+        isProgrammaticChange = true;
+        input.value = name;
+        isProgrammaticChange = false;
+        closeDropdown();
+      }
+
+      input.addEventListener('focus', () => openDropdown());
+
+      input.addEventListener('input', () => {
+        if (isProgrammaticChange) return;
+        openDropdown();
+        if (selectedProductId !== null) {
+          selectedProductId = null;
+        }
+      });
+
+      input.addEventListener('keydown', (e) => {
+        const opts = dropdown.querySelectorAll('.ss-option:not(.no-result)');
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          if (!dropdown.classList.contains('open')) { openDropdown(); return; }
+          highlightedIdx = Math.min(highlightedIdx + 1, opts.length - 1);
+          opts.forEach((o, i) => o.classList.toggle('highlighted', i === highlightedIdx));
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          highlightedIdx = Math.max(highlightedIdx - 1, 0);
+          opts.forEach((o, i) => o.classList.toggle('highlighted', i === highlightedIdx));
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          if (highlightedIdx >= 0 && opts[highlightedIdx]) {
+            const opt = opts[highlightedIdx];
+            selectProduct(parseInt(opt.dataset.id), opt.textContent);
+          }
+        } else if (e.key === 'Escape') {
+          closeDropdown();
+        }
+      });
+
+      dropdown.addEventListener('click', (e) => {
+        const opt = e.target.closest('.ss-option');
+        if (!opt || opt.classList.contains('no-result')) return;
+        selectProduct(parseInt(opt.dataset.id), opt.textContent);
+      });
+
+      document.addEventListener('click', (e) => {
+        const wrap = document.getElementById('productSelectWrap');
+        if (!wrap.contains(e.target)) closeDropdown();
+      });
+
+      // 初始显示所有选项
+      const filtered = filterProducts('');
+      renderDropdown(filtered);
+    }
+
+    function getSelectedProductId() {
+      return selectedProductId;
+    }
+
+    function fmt(val, decimals = 2) {
+      return Number(val).toLocaleString('zh-CN', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    }
+
+    // 点击计算按钮触发计算
+    async function doCalculate() {
+      const productId = getSelectedProductId();
+      const dealPrice = document.getElementById('inputDealPrice').value;
+      const pointRate = document.getElementById('inputPointRate').value;
+      const el = document.getElementById('liveResult');
+
+      if (!productId) {
+        el.innerHTML = '<div class="result-item"><div class="label" style="color:#f87171;">请先选择产品</div></div>';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/calculate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            product_id: productId,
+            deal_price: parseFloat(dealPrice) || 0,
+            point_rate: parseFloat(pointRate) || 0
+          })
+        });
+        const data = await res.json();
+        if (!data.success) return;
+        const p = data.data;
+        el.innerHTML = `
+          <div class="result-item">
+            <div class="label">利润</div>
+            <div class="value ${p.profit >= 0 ? 'positive' : 'negative'}">¥${fmt(p.profit)}</div>
+          </div>
+        `;
+      } catch (e) {}
+    }
+
+    function showToast(msg, type = 'success') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = `toast toast-${type}`;
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, 3000);
+    }
+
+    function formMsg(msg, ok = true) {
+      const el = document.getElementById('formMsg');
+      el.textContent = msg;
+      el.style.color = ok ? '#34d399' : '#f87171';
+      setTimeout(() => { el.textContent = ''; }, 4000);
+    }
+
+    async function saveRecord() {
+      const productId = getSelectedProductId();
+      const dealPrice = document.getElementById('inputDealPrice').value;
+      const pointRate = document.getElementById('inputPointRate').value;
+      if (!productId) return formMsg('请选择产品', false);
+      if (dealPrice === '' || dealPrice === null) return formMsg('请输入成交价', false);
+      if (pointRate === '' || pointRate === null) return formMsg('请输入点位', false);
+
+      const body = {
+        product_id: productId,
+        deal_price: parseFloat(dealPrice) || 0,
+        point_rate: parseFloat(pointRate) || 0,
+        note: document.getElementById('inputNote').value.trim()
+      };
+
+      try {
+        const res = await fetch(API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('记录已保存');
+          clearForm();
+        } else {
+          formMsg(data.message || '保存失败', false);
+        }
+      } catch (e) {
+        formMsg('网络错误：无法连接后端服务', false);
+      }
+    }
+
+    function clearForm() {
+      selectedProductId = null;
+      isProgrammaticChange = true;
+      document.getElementById('inputProductSearch').value = '';
+      isProgrammaticChange = false;
+      document.getElementById('inputDealPrice').value = '0';
+      document.getElementById('inputPointRate').value = '0';
+      document.getElementById('inputNote').value = '';
+      document.getElementById('liveResult').innerHTML = '';
+    }
+
+    async function init() {
+      await loadProducts();
+    }
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "profit-calculator",
+  "version": "1.0.0",
+  "description": "利润计算器 - 支持数据上传后端存储",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "profit-calculator": "file:",
+    "sql.js": "^1.10.2"
+  }
+}
